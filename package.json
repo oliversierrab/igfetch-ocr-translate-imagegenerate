@@ -1,0 +1,19 @@
+{
+  "name": "scrapeapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "fetch": "node ./fetch.js",
+    "proccess": "node ./proccess.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "instagram-without-api-node": "^1.0.12",
+    "ocr-space-api-wrapper": "^2.3.0"
+  }
+}
