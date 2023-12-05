@@ -1,4 +1,5 @@
 const dotenv = require('dotenv');
+const axios = require('axios');
 const { createCanvas } = require('canvas');
 const fs = require('fs');
 const { ocrSpace } = require('ocr-space-api-wrapper');
@@ -16,18 +17,17 @@ async function getTextFromImage(url) {
     return result.ParsedResults[0].ParsedText;
   } catch (error) {
     console.error(error);
+    throw error;
   }
 }
 
 async function correctGrammar(text) {
-  const axios = require('axios');
-
   const encodedParams = new URLSearchParams();
   encodedParams.set('text', text);
 
   const options = {
     method: 'GET',
-    url: `https://api.textgears.com/correct?text=${text}&language=en-US&key=${TEXTGEARS_KEY}`,
+    url: `https://api.textgears.com/correct?text=${text}&language=es-ES&key=${TEXTGEARS_KEY}`,
   };
 
   try {
@@ -36,71 +36,93 @@ async function correctGrammar(text) {
     return response.data.response.corrected;
   } catch (error) {
     console.error(error);
+    throw error;
   }
 }
 
-const target = 'es';
-
 async function translateText(text) {
-  let [translations] = await translate.translate(text, target);
-
-  translations = Array.isArray(translations) ? translations : [translations];
+  try {
+    let [translations] = await translate.translate(text, 'es');
   
-  return translations[0];
+    translations = Array.isArray(translations) ? translations : [translations];
+    
+    return translations[0];
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
-function generateImage(id, text) {
-  // Set the canvas size
-  const canvasWidth = 1200;
-  const canvasHeight = 1200;
-  
-  // Set the background color
-  const backgroundColor = '#f0f0f0'; // Soft color
-  
-  // Set the text color
-  const textColor = '#000000'; // Black
-  
-  // Set the font family and size
-  const fontFamily = 'Sans';
-  const fontSize = 35;
-  
-  // Set the provided text
-  const providedText = text;
+const canvasOptions = {
+  canvasWidth: 1200,
+  canvasHeight: 1200,
+  backgroundColor: '#f0f0f0',
+  textColor: '#000000', 
+  fontSize: 35,
+  fontFamily: 'Sans'
+}
 
-  console.log(providedText);
-  
-  // Create a canvas and context
-  const canvas = createCanvas(canvasWidth, canvasHeight);
+// Function to create the image
+async function generateImage(id, text) {
+  // Function to split text into lines that fit within a given width
+  function splitTextIntoLines(text, ctx, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const testLine = currentLine + ' ' + words[i];
+      const testWidth = ctx.measureText(testLine).width;
+
+      if (testWidth <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        lines.push(currentLine);
+        currentLine = words[i];
+      }
+    }
+
+    lines.push(currentLine);
+    return lines;
+  }
+
+  const canvas = createCanvas(canvasOptions.canvasWidth, canvasOptions.canvasHeight);
   const ctx = canvas.getContext('2d');
-  
+
   // Set the background color
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-  
+  ctx.fillStyle = canvasOptions.backgroundColor;
+  ctx.fillRect(0, 0, canvasOptions.canvasWidth, canvasOptions.canvasHeight);
+
   // Set the text properties
-  ctx.fillStyle = textColor;
-  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.fillStyle = canvasOptions.textColor;
+  ctx.font = `${canvasOptions.fontSize}px ${canvasOptions.fontFamily}`;
   ctx.textAlign = 'center';
-  
-  // Split the text into lines
-  const lines = providedText.split('\n');
-  
-  // Calculate the vertical position for the text block
-  const textBlockHeight = lines.length * fontSize;
-  const startY = canvasHeight / 2 - textBlockHeight / 2;
-  
+  ctx.textBaseline = 'middle';
+
+  // Split text into multiple lines if necessary
+  const lines = splitTextIntoLines(text, ctx, canvasOptions.canvasWidth - 40);
+
+  // Calculate the total height of the text block
+  const totalTextHeight = lines.length * canvasOptions.fontSize;
+
+  // Calculate the starting y-coordinate for vertically aligning the text
+  const startY = (canvasOptions.canvasHeight - totalTextHeight) / 2;
+
   // Draw each line of text
   lines.forEach((line, index) => {
-    const textY = startY + index * fontSize;
-    ctx.fillText(line, canvasWidth / 2, textY);
+    const y = startY + index * canvasOptions.fontSize;
+    ctx.fillText(line, canvasOptions.canvasWidth / 2, y);
   });
-  
-  // Save the image as a JPG file
-  const buffer = canvas.toBuffer('image/jpeg');
-  fs.writeFileSync(`./results/images/output${id}.jpg`, buffer);
-  console.log(`Image generated successfully!: output${id}.jpg`);
-  
+
+  // Save the image to a file (change the filename as needed)
+  const fs = require('fs');
+  const out = fs.createWriteStream(`./results/images/output-${id}.jpg`);
+  const stream = canvas.createJPEGStream({ quality: 0.95 });
+  stream.pipe(out);
+
+  out.on('finish', () => console.log('Image created successfully'));
 }
+
 
 module.exports = {
   getTextFromImage,

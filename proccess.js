@@ -32,10 +32,10 @@ async function proccess() {
     }
   
     const copy = await getTextFromImage(imageUrl);
-    const corrected = await correctGrammar(copy); // Corrections are nor always good. Not using them but leaving function in place for reference
     const translation = await translateText(copy);
+    const correctedEs = await correctGrammar(translation);
     // Add the item to transcriptions array
-    transcriptions.push({ id, imageUrl, copy, corrected, translation });
+    transcriptions.push({ id, imageUrl, copy, correctedEs });
   
     // Log the id to used.txt
     fs.appendFileSync(usedFileName, `${id}\n`);

@@ -12,9 +12,9 @@ async function generateImages() {
   const inputData = JSON.parse(inputFileContent);
   
   for (const item of inputData) {
-    const { id, translation } = item;
+    const { id, correctedEs } = item;
   
-    generateImage(id, translation);
+    generateImage(id, correctedEs);
   
     console.log(`Image Generated for item with id ${id}`);
   }  
