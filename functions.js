@@ -1,10 +1,9 @@
 const dotenv = require('dotenv');
-
-// Load environment variables from .env file
-dotenv.config();
-
+const { createCanvas, loadImage } = require('canvas');
+const fs = require('fs');
 const { ocrSpace } = require('ocr-space-api-wrapper');
 
+dotenv.config();
 const { OCR_KEY, TEXTGEARS_KEY } = process.env;
 
 async function getTextFromImage(url) {
@@ -39,7 +38,40 @@ async function correctGrammar(text) {
 
 // TODO: Translate function, Image Generation Function
 
+
+
+async function generateImage(id, text) {
+  // Create a canvas
+  const canvas = createCanvas(1200, 1200);
+  const ctx = canvas.getContext('2d');
+
+  // Set background color
+  ctx.fillStyle = '#f0f0f0'; // Soft color, adjust as needed
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Set text properties
+  ctx.fillStyle = '#000000'; // Black text
+  ctx.font = 'bold 30px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Calculate text position
+  const textX = canvas.width / 2;
+  const textY = canvas.height / 2;
+
+  // Draw text on canvas
+  ctx.fillText(text, textX, textY);
+
+  // Save the canvas as a JPEG image
+  const buffer = canvas.toBuffer('image/jpeg');
+  fs.writeFileSync(`./results/images/output${id}.jpg`, buffer);
+}
+
+generateImage('123','Hello, ChatGPT!');
+
+
 module.exports = {
   getTextFromImage,
-  correctGrammar
+  correctGrammar,
+  generateImage
 }

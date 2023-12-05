@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const { getTextFromImage, correctGrammar } = require('./functions.js');
+const { getTextFromImage, correctGrammar, generateImage } = require('./functions.js');
 
 const inputFileName = './results/sourcePosts.json';
 const outputFileName = './results/transcriptions.json';
@@ -35,6 +35,10 @@ async function proccess() {
     const corrected = await correctGrammar(copy);
     // Add the item to transcriptions array
     transcriptions.push({ id, imageUrl, copy, corrected });
+
+    // TODO: Translate
+
+    generateImage(id, copy);
 
   
     // Log the id to used.txt
