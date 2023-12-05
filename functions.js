@@ -56,8 +56,8 @@ async function translateText(text) {
 const canvasOptions = {
   canvasWidth: 1200,
   canvasHeight: 1200,
-  backgroundColor: '#f0f0f0',
-  textColor: '#000000', 
+  backgroundColor: '#f3e9e9',
+  textColor: '#393231', 
   fontSize: 35,
   fontFamily: 'Sans'
 }
