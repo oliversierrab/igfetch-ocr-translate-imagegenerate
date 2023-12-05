@@ -32,10 +32,11 @@ async function proccess() {
     }
   
     const copy = await getTextFromImage(imageUrl);
-    const translation = await translateText(copy);
+    const noBreaks = copy.replace(/[\r\n]+/g, '')
+    const translation = await translateText(noBreaks);
     const correctedEs = await correctGrammar(translation);
     // Add the item to transcriptions array
-    transcriptions.push({ id, imageUrl, copy, correctedEs });
+    transcriptions.push({ id, imageUrl, noBreaks, correctedEs });
   
     // Log the id to used.txt
     fs.appendFileSync(usedFileName, `${id}\n`);
