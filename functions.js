@@ -1,9 +1,12 @@
 const dotenv = require('dotenv');
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas } = require('canvas');
 const fs = require('fs');
 const { ocrSpace } = require('ocr-space-api-wrapper');
+const {Translate} = require('@google-cloud/translate').v2;
 
+const translate = new Translate();
 dotenv.config();
+
 const { OCR_KEY, TEXTGEARS_KEY } = process.env;
 
 async function getTextFromImage(url) {
@@ -36,42 +39,72 @@ async function correctGrammar(text) {
   }
 }
 
-// TODO: Translate function, Image Generation Function
+const target = 'es';
 
+async function translateText(text) {
+  let [translations] = await translate.translate(text, target);
 
-
-async function generateImage(id, text) {
-  // Create a canvas
-  const canvas = createCanvas(1200, 1200);
-  const ctx = canvas.getContext('2d');
-
-  // Set background color
-  ctx.fillStyle = '#f0f0f0'; // Soft color, adjust as needed
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Set text properties
-  ctx.fillStyle = '#000000'; // Black text
-  ctx.font = 'bold 30px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  // Calculate text position
-  const textX = canvas.width / 2;
-  const textY = canvas.height / 2;
-
-  // Draw text on canvas
-  ctx.fillText(text, textX, textY);
-
-  // Save the canvas as a JPEG image
-  const buffer = canvas.toBuffer('image/jpeg');
-  fs.writeFileSync(`./results/images/output${id}.jpg`, buffer);
+  translations = Array.isArray(translations) ? translations : [translations];
+  
+  return translations[0];
 }
 
-generateImage('123','Hello, ChatGPT!');
+function generateImage(id, text) {
+  // Set the canvas size
+  const canvasWidth = 1200;
+  const canvasHeight = 1200;
+  
+  // Set the background color
+  const backgroundColor = '#f0f0f0'; // Soft color
+  
+  // Set the text color
+  const textColor = '#000000'; // Black
+  
+  // Set the font family and size
+  const fontFamily = 'Sans';
+  const fontSize = 35;
+  
+  // Set the provided text
+  const providedText = text;
 
+  console.log(providedText);
+  
+  // Create a canvas and context
+  const canvas = createCanvas(canvasWidth, canvasHeight);
+  const ctx = canvas.getContext('2d');
+  
+  // Set the background color
+  ctx.fillStyle = backgroundColor;
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  
+  // Set the text properties
+  ctx.fillStyle = textColor;
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.textAlign = 'center';
+  
+  // Split the text into lines
+  const lines = providedText.split('\n');
+  
+  // Calculate the vertical position for the text block
+  const textBlockHeight = lines.length * fontSize;
+  const startY = canvasHeight / 2 - textBlockHeight / 2;
+  
+  // Draw each line of text
+  lines.forEach((line, index) => {
+    const textY = startY + index * fontSize;
+    ctx.fillText(line, canvasWidth / 2, textY);
+  });
+  
+  // Save the image as a JPG file
+  const buffer = canvas.toBuffer('image/jpeg');
+  fs.writeFileSync(`./results/images/output${id}.jpg`, buffer);
+  console.log(`Image generated successfully!: output${id}.jpg`);
+  
+}
 
 module.exports = {
   getTextFromImage,
   correctGrammar,
+  translateText,
   generateImage
 }

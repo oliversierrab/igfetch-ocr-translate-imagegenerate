@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const { getTextFromImage, correctGrammar, generateImage } = require('./functions.js');
+const { getTextFromImage, correctGrammar, generateImage, translateText } = require('./functions.js');
 
 const inputFileName = './results/sourcePosts.json';
 const outputFileName = './results/transcriptions.json';
@@ -23,23 +23,19 @@ async function proccess() {
   const transcriptions = [];
   
   for (const item of inputData) {
-    const { id, imageUrl, videoUrl } = item;
+    const { id, imageUrl, videoUrl, carousel } = item;
   
     // Check if the item has a videoUrl or if the id has been used already
-    if (videoUrl || usedIds.includes(id)) {
-      console.log(`Skipping item with id ${id} due to videoUrl or already processed.`);
+    if (videoUrl || carousel || usedIds.includes(id)) {
+      console.log(`Skipping item with id ${id} due to videoUrl, carousel or already processed.`);
       continue;
     }
   
     const copy = await getTextFromImage(imageUrl);
-    const corrected = await correctGrammar(copy);
+    const corrected = await correctGrammar(copy); // Corrections are nor always good. Not using them but leaving function in place for reference
+    const translation = await translateText(copy);
     // Add the item to transcriptions array
-    transcriptions.push({ id, imageUrl, copy, corrected });
-
-    // TODO: Translate
-
-    generateImage(id, copy);
-
+    transcriptions.push({ id, imageUrl, copy, corrected, translation });
   
     // Log the id to used.txt
     fs.appendFileSync(usedFileName, `${id}\n`);
