@@ -58,7 +58,7 @@ const canvasOptions = {
   canvasHeight: 1200,
   backgroundColor: '#f3e9e9',
   textColor: '#393231', 
-  fontSize: 35,
+  fontSize: 50,
   fontFamily: 'Sans'
 }
 
